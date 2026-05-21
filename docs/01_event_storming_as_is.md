@@ -69,28 +69,28 @@ Events represent business facts that already happened.
 
 ```mermaid
 ---
-title: Metalpol AS-IS Event Storming Process Map (Dark Mode)
+title: Metalpol AS-IS Event Storming Process Map
 config:
   layout: dagre
   theme: base
   themeVariables:
     fontFamily: Inter, Segoe UI, Helvetica, Arial
-    primaryColor: "#0F172A"
-    primaryTextColor: "#E2E8F0"
-    primaryBorderColor: "#334155"
-    lineColor: "#94A3B8"
-    clusterBkg: "#1E293B"
-    clusterBorder: "#334155"
+    primaryColor: "#FFFFFF"
+    primaryTextColor: "#1E293B"
+    primaryBorderColor: "#94A3B8"
+    lineColor: "#475569"
+    clusterBkg: "#F8FAFC"
+    clusterBorder: "#E2E8F0"
 ---
 flowchart LR
-    %% High-Contrast Dark Mode Event Storming Palette
-    classDef actor fill:#0C4A6E,stroke:#38BDF8,stroke-width:2px,color:#E0F2FE
-    classDef command fill:#0369A1,stroke:#0EA5E9,stroke-width:1.5px,color:#F0FDF4
-    classDef event fill:#C2410C,stroke:#F97316,stroke-width:1.5px,color:#FFEDD5
-    classDef policy fill:#4D0519,stroke:#DB2777,stroke-width:1.5px,color:#FCE7F3
-    classDef system fill:#854D0E,stroke:#EAB308,stroke-width:1.5px,color:#FEF08A
-    classDef pain fill:#7F1D1D,stroke:#EF4444,stroke-width:2px,color:#FEE2E2
-    classDef decision fill:#581C87,stroke:#A855F7,stroke-width:2px,color:#F3E8FF
+    %% Professional Event Storming Color Palette Definitions
+    classDef actor fill:#E0F2FE,stroke:#0284C7,stroke-width:2px,color:#0F172A
+    classDef command fill:#BAE6FD,stroke:#0284C7,stroke-width:1.5px,color:#0C4A6E
+    classDef event fill:#FED7AA,stroke:#EA580C,stroke-width:1.5px,color:#7C2D12
+    classDef policy fill:#F3E8FF,stroke:#9333EA,stroke-width:1.5px,color:#581C87
+    classDef system fill:#FEF08A,stroke:#CA8A04,stroke-width:1.5px,color:#713F12
+    classDef pain fill:#FEE2E2,stroke:#EF4444,stroke-width:2px,color:#7F1D1D
+    classDef decision fill:#FCE7F3,stroke:#DB2777,stroke-width:2px,color:#4C0519
 
     %% --- CUSTOMER AND INTAKE LAYER ---
     subgraph SubCustomer["1. Channel & Customer Intake"]
@@ -175,7 +175,6 @@ flowchart LR
     CMD_CHECK_BATCH --> SAP
     SAP --> EVT_BATCH_CHECKED
 
-    %% Dynamic connection fix for labels
     EVT_BATCH_CHECKED --> CMD_CREATE_COMPLAINT
     CMD_CREATE_COMPLAINT --> JIRA
     JIRA --> EVT_COMPLAINT_CREATED
@@ -185,7 +184,7 @@ flowchart LR
     EVT_RESPONSE_SENT -.-> PAIN_SLA
 
     EVT_BATCH_CHECKED --> POL_CONFIRMED
-    POL_CONFIRMED -->|"Yes"| CMD_CREATE_CORRECTION
+    POL_CONFIRMED -->|Yes| CMD_CREATE_CORRECTION
     CMD_CREATE_CORRECTION --> JIRA
     JIRA --> EVT_CORRECTION_CREATED
 
