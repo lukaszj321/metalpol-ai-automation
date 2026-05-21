@@ -1,0 +1,40 @@
+{
+  "source": {
+    "message_id": "AAMkAGExampleMessageId",
+    "mailbox": "reklamacje@metalpol.pl",
+    "received_at": "2026-05-21T09:42:00Z"
+  },
+  "customer": {
+    "name": "AutoParts GmbH",
+    "email": "quality@autoparts.example",
+    "language": "EN"
+  },
+  "complaint": {
+    "order_id": "MP-2026-10445",
+    "batch_id": "B-77A-2026",
+    "description": "Visible scratches on the coated surface of delivered metal brackets.",
+    "category": "visual",
+    "classification_confidence": 0.87,
+    "requires_human_review": false
+  },
+  "attachments": [
+    {
+      "filename": "defect_01.jpg",
+      "content_type": "image/jpeg",
+      "size_bytes": 3145728,
+      "blob_url": "https://storage.example/complaints/MP-2026-10445/defect_01.jpg"
+    }
+  ],
+  "sap_validation": {
+    "order_found": true,
+    "batch_found": true,
+    "production_line": "Line 2",
+    "operator_id": "OP-184",
+    "validation_status": "validated"
+  },
+  "jira": {
+    "complaint_issue_type": "Complaint",
+    "correction_required": true,
+    "correction_issue_type": "Correction"
+  }
+}
