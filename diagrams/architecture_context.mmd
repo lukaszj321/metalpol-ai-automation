@@ -1,0 +1,93 @@
+---
+title: Metalpol Complaint Automation - Architecture Context (Dark Mode)
+config:
+  layout: dagre
+  theme: base
+  themeVariables:
+    fontFamily: Inter, Segoe UI, Arial
+    primaryColor: "#0F172A"
+    primaryTextColor: "#E2E8F0"
+    primaryBorderColor: "#334155"
+    lineColor: "#94A3B8"
+    clusterBkg: "#1E293B"
+    clusterBorder: "#334155"
+---
+flowchart TB
+    %% Architecture context diagram - High Contrast Dark Palette
+
+    classDef user fill:#0C4A6E,stroke:#38BDF8,stroke-width:2px,color:#E0F2FE
+    classDef service fill:#115E59,stroke:#14B8A6,stroke-width:2px,color:#E6F4F1
+    classDef ai fill:#6B21A8,stroke:#A855F7,stroke-width:2px,color:#F3E8FF
+    classDef external fill:#334155,stroke:#64748B,stroke-width:2px,color:#F1F5F9
+    classDef db fill:#1E3A8A,stroke:#3B82F6,stroke-width:2px,color:#DBEAFE
+    classDef storage fill:#065F46,stroke:#10B981,stroke-width:2px,color:#D1FAE5
+    classDef review fill:#9A3412,stroke:#F97316,stroke-width:2px,color:#FFEDD5
+    classDef guard fill:#7F1D1D,stroke:#EF4444,stroke-width:2px,color:#FEE2E2
+
+    subgraph ExternalSystems["External systems"]
+        MAIL["Microsoft 365 / Exchange<br/>Graph API + webhook"]:::external
+        SAP["SAP ERP PP/QM<br/>orders + batches"]:::external
+        JIRA["JIRA Cloud<br/>project REK"]:::external
+        CUSTOMER_DB["Customer DB<br/>PostgreSQL read-only"]:::db
+        BLOB["Azure Blob Storage<br/>defect photos"]:::storage
+    end
+
+    subgraph AutomationCore["Automation core"]
+        INTAKE["Complaint Intake API<br/>FastAPI / webhook endpoint"]:::service
+        QUEUE["Background job queue<br/>retry + async processing"]:::service
+        VALIDATOR["Deterministic Validator<br/>schema, required fields, idempotency"]:::guard
+        SAP_LOOKUP["SAP Lookup Service<br/>rate limit aware"]:::service
+        JIRA_SYNC["JIRA Integration Service<br/>Complaint / Correction"]:::service
+        RESPONSE_SEND["Approved Response Sender"]:::service
+    end
+
+    subgraph AILayer["AI layer"]
+        EXTRACTOR["AI Extraction<br/>email to structured JSON"]:::ai
+        CLASSIFIER["AI Classification<br/>defect category + confidence"]:::ai
+        DRAFT["AI Response Draft<br/>PL / EN"]:::ai
+    end
+
+    subgraph HumanLayer["Human-in-the-loop"]
+        REVIEW["Human Review Queue"]:::review
+        SPECIALIST["Service Specialist"]:::user
+        QUALITY["Quality Department"]:::user
+    end
+
+    subgraph Reporting["Reporting and audit"]
+        OPS_DB["Operational Processing DB"]:::db
+        REPORT_DB["Reporting Layer<br/>metrics and dashboards"]:::db
+        AUDIT["AI Decision Audit Log<br/>input hash + output + confidence"]:::db
+    end
+
+    %% --- CONNECTIONS ---
+    MAIL -->|"new message webhook"| INTAKE
+    INTAKE -->|"enqueue processing"| QUEUE
+    QUEUE -->|"download attachments"| MAIL
+    QUEUE -->|"store images"| BLOB
+    QUEUE --> EXTRACTOR
+    EXTRACTOR --> VALIDATOR
+    VALIDATOR --> CLASSIFIER
+    CLASSIFIER --> SAP_LOOKUP
+
+    SAP_LOOKUP -->|"/api/v1/orders/{id}"| SAP
+    SAP_LOOKUP -->|"/api/v1/batches/{id}"| SAP
+    SAP_LOOKUP -->|"customer enrichment"| CUSTOMER_DB
+
+    SAP_LOOKUP --> JIRA_SYNC
+    JIRA_SYNC -->|"create Complaint"| JIRA
+    JIRA_SYNC -->|"create Correction"| JIRA
+    JIRA_SYNC --> DRAFT
+    DRAFT --> REVIEW
+    REVIEW --> SPECIALIST
+    SPECIALIST -->|"approve / edit"| RESPONSE_SEND
+    RESPONSE_SEND -->|"send reply"| MAIL
+
+    JIRA --> QUALITY
+
+    INTAKE --> OPS_DB
+    VALIDATOR --> OPS_DB
+    EXTRACTOR --> AUDIT
+    CLASSIFIER --> AUDIT
+    DRAFT --> AUDIT
+    JIRA_SYNC --> REPORT_DB
+    RESPONSE_SEND --> REPORT_DB
