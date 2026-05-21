@@ -1,0 +1,125 @@
+---
+title: Metalpol AS-IS Event Storming Process Map (Dark Mode)
+config:
+  layout: dagre
+  theme: base
+  themeVariables:
+    fontFamily: Inter, Segoe UI, Helvetica, Arial
+    primaryColor: "#0F172A"
+    primaryTextColor: "#E2E8F0"
+    primaryBorderColor: "#334155"
+    lineColor: "#94A3B8"
+    clusterBkg: "#1E293B"
+    clusterBorder: "#334155"
+---
+flowchart LR
+    %% High-Contrast Dark Mode Event Storming Palette
+    classDef actor fill:#0C4A6E,stroke:#38BDF8,stroke-width:2px,color:#E0F2FE
+    classDef command fill:#0369A1,stroke:#0EA5E9,stroke-width:1.5px,color:#F0FDF4
+    classDef event fill:#C2410C,stroke:#F97316,stroke-width:1.5px,color:#FFEDD5
+    classDef policy fill:#4D0519,stroke:#DB2777,stroke-width:1.5px,color:#FCE7F3
+    classDef system fill:#854D0E,stroke:#EAB308,stroke-width:1.5px,color:#FEF08A
+    classDef pain fill:#7F1D1D,stroke:#EF4444,stroke-width:2px,color:#FEE2E2
+    classDef decision fill:#581C87,stroke:#A855F7,stroke-width:2px,color:#F3E8FF
+
+    %% --- CUSTOMER AND INTAKE LAYER ---
+    subgraph SubCustomer["1. Channel & Customer Intake"]
+        CUST("Klient / Customer"):::actor
+        CMD_SEND["Send complaint email"]:::command
+        MAIL["System: Microsoft 365<br/>reklamacje@metalpol.pl"]:::system
+        EVT_EMAIL_RECEIVED["Complaint email received"]:::event
+        
+        PAIN_SPAM["CRITICAL:<br/>~40% emails in spam<br/>or read with delay"]:::pain
+    end
+
+    %% --- MANUAL PROCESSING LAYER ---
+    subgraph SubService["2. Manual Verification & Triage"]
+        POL_CHECK_MAILBOX["Policy: Specialist checks<br/>mailbox manually"]:::policy
+        EVT_EMAIL_READ["Complaint email read"]:::event
+        EVT_EMAIL_DELAYED["Complaint email<br/>missed or delayed"]:::event
+
+        CMD_EXCEL["Register complaint in Excel"]:::command
+        EXCEL["System: Excel<br/>Rejestr Reklamacji 2026.xlsx"]:::system
+        EVT_EXCEL["Complaint data manually<br/>entered into Excel"]:::event
+
+        CMD_CLASSIFY["Categorize defect manually"]:::command
+        EVT_CLASSIFIED["Defect category<br/>assigned manually"]:::event
+        
+        PAIN_CLASS["PAIN:<br/>Inconsistent categories<br/>between specialists"]:::pain
+    end
+
+    %% --- DATA ENRICHMENT LAYER ---
+    subgraph SubSap["3. SAP ERP Enrichment"]
+        CMD_CHECK_ORDER["Check order in SAP"]:::command
+        SAP["System: SAP ERP PP/QM"]:::system
+        EVT_ORDER_CHECKED["Order data checked in SAP"]:::event
+        
+        CMD_CHECK_BATCH["Check batch in SAP"]:::command
+        EVT_BATCH_CHECKED["Batch data checked in SAP"]:::event
+    end
+
+    %% --- WORKFLOW AND ACTION LAYER ---
+    subgraph SubJira["4. Records Creation & Resolution"]
+        CMD_CREATE_COMPLAINT["Create Complaint ticket"]:::command
+        JIRA["System: JIRA Cloud<br/>Project REK"]:::system
+        EVT_COMPLAINT_CREATED["Complaint ticket<br/>created in JIRA"]:::event
+        
+        POL_CONFIRMED{"Policy:<br/>Defect confirmed?"}:::decision
+        CMD_CREATE_CORRECTION["Create Correction ticket"]:::command
+        EVT_CORRECTION_CREATED["Correction ticket<br/>created for Quality"]:::event
+    end
+
+    %% --- OUTPUT & VISIBILITY ---
+    subgraph SubOutbound["5. Close-out & Reporting"]
+        CMD_REPLY["Reply to customer"]:::command
+        EVT_RESPONSE_SENT["Customer response sent"]:::event
+        
+        PAIN_SLA["PAIN:<br/>High SLA Time<br/>Avg response: 2 days"]:::pain
+        PAIN_METRICS["MANAGEMENT PAIN:<br/>No reliable metrics<br/>(types, lines, backlog)"]:::pain
+    end
+
+    %% --- RELATIONSHIPS AND FLOW ---
+    CUST --> CMD_SEND
+    CMD_SEND --> MAIL
+    MAIL --> EVT_EMAIL_RECEIVED
+    MAIL -.-> PAIN_SPAM
+
+    EVT_EMAIL_RECEIVED --> POL_CHECK_MAILBOX
+    POL_CHECK_MAILBOX --> EVT_EMAIL_READ
+    POL_CHECK_MAILBOX -.->|Unreliable path| EVT_EMAIL_DELAYED
+    EVT_EMAIL_DELAYED -.-> PAIN_SLA
+
+    EVT_EMAIL_READ --> CMD_EXCEL
+    CMD_EXCEL --> EXCEL
+    EXCEL --> EVT_EXCEL
+    
+    EVT_EXCEL --> CMD_CLASSIFY
+    CMD_CLASSIFY --> EVT_CLASSIFIED
+    EVT_CLASSIFIED -.-> PAIN_CLASS
+
+    EVT_CLASSIFIED --> CMD_CHECK_ORDER
+    CMD_CHECK_ORDER --> SAP
+    SAP --> EVT_ORDER_CHECKED
+    
+    EVT_ORDER_CHECKED --> CMD_CHECK_BATCH
+    CMD_CHECK_BATCH --> SAP
+    SAP --> EVT_BATCH_CHECKED
+
+    %% Dynamic connection fix for labels
+    EVT_BATCH_CHECKED --> CMD_CREATE_COMPLAINT
+    CMD_CREATE_COMPLAINT --> JIRA
+    JIRA --> EVT_COMPLAINT_CREATED
+    
+    EVT_COMPLAINT_CREATED --> CMD_REPLY
+    CMD_REPLY --> EVT_RESPONSE_SENT
+    EVT_RESPONSE_SENT -.-> PAIN_SLA
+
+    EVT_BATCH_CHECKED --> POL_CONFIRMED
+    POL_CONFIRMED -->|"Yes"| CMD_CREATE_CORRECTION
+    CMD_CREATE_CORRECTION --> JIRA
+    JIRA --> EVT_CORRECTION_CREATED
+
+    %% Systems causing lack of metrics links
+    EXCEL -.-> PAIN_METRICS
+    JIRA -.-> PAIN_METRICS
+    SAP -.-> PAIN_METRICS
